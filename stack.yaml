@@ -1,0 +1,10 @@
+resolver: lts-14.11
+
+packages:
+- .
+
+extra-deps:
+- github: alpacaaa/zero-bullshit-haskell
+  commit: master
+  subdirs:
+    - library
