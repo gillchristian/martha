@@ -48,7 +48,7 @@ directoryHandler directory = do
   parent <- liftIO $ Path.takeFileName <$> Dir.getCurrentDirectory
   let withParent = parent </> basePath
   allContents <- liftIO $ Dir.getDirectoryContents directory
-  dirContent <- liftIO $ traverse (toItem basePath) allContents
+  dirContent <- liftIO $ List.sort <$> traverse (toItem basePath) allContents
   let crumbs = breadcrumbs ("/", parent) basePath
   pure $ renderPath withParent crumbs dirContent
 
@@ -104,7 +104,7 @@ renderBreadcrumb (url, name) =
     [href_ $ Text.pack $ makeAbsolute url]
     $ toHtml
     $ Text.pack
-    $ makeAbsolute name
+    $ Path.addTrailingPathSeparator name
 
 -- -----------------------------------------------------------------------------
 
