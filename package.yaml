@@ -1,40 +1,37 @@
-name:                serve
-version:             0.1.0.0
-github:              "githubuser/serve"
-license:             BSD3
-author:              "Author name here"
-maintainer:          "example@example.com"
-copyright:           "2019 Author name here"
+name:                readme
+version:             0.0.1.0
+github:              "gillchristian/readme"
+license:             MIT
+author:              "gillchristian"
+maintainer:          "gillchristian@gmail.com"
+copyright:           "2019 Christian Gill"
+description:         Please see the README on GitHub at <https://github.com/gillchristian/readme#readme>
 
 extra-source-files:
-- README.md
-- ChangeLog.md
-
-# Metadata used when publishing your package
-# synopsis:            Short description of your package
-# category:            Web
-
-# To avoid duplicated efforts in documentation and dealing with the
-# complications of embedding Haddock markup inside cabal files, it is
-# common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/githubuser/serve#readme>
+- readme.md
 
 dependencies:
 - base >= 4.7 && < 5
 - directory
-- zero-bullshit
 - aeson
-
-default-extensions:
-- OverloadedStrings
-- DeriveGeneric
-- DeriveAnyClass
+- bytestring
+- text
+- http-types
+- http-client
+- servant
+- servant-server
+- servant-lucid
+- lucid
+- warp
+- transformers
+- mtl
+- filepath
 
 library:
   source-dirs: src
 
 executables:
-  serve-exe:
+  readme:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -43,7 +40,7 @@ executables:
     - -with-rtsopts=-N
     - -Wall
     dependencies:
-    - serve
+    - readme
 
 tests:
   serve-test:
@@ -54,4 +51,4 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - serve
+    - readme
