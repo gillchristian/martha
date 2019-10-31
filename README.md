@@ -21,15 +21,19 @@ _You probably can use cabal as well_.
 
 **Improvements / fixes**
 
-- [x] Inline CSS =/ (in separate file is good enough, for now)
+- [x] Inline CSS =/
+      ([Data.FileEmbed](http://hackage.haskell.org/package/file-embed-0.0.11/docs/Data-FileEmbed.html))
+      :tada:
 - [x] Render HTML views
-- [ ] Render HTML views should be opt-out (I might want to see the code)
+- [ ] Render HTML views should be opt-out (I might want to see it as code
+      instead, e.g. raw vs. rendered on GitHub)
 - [ ] Serve files (e.g. CSS, JS) "normally" for HTML views !!!
 - [ ] Handle 404s
 - [ ] Handle media files (as HTML with their own standalone view)
 - [ ] .gitignore aware (opt-out)
 - [ ] Filter '..' on root
 - [ ] Don't show logs (Servant logs some errors, like 404)
+
 ```
 ~/projects
 $ readme

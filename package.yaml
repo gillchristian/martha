@@ -28,6 +28,7 @@ dependencies:
 - filepath
 - cheapskate
 - cheapskate-lucid
+- file-embed
 
 library:
   source-dirs: src
