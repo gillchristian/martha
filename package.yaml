@@ -26,6 +26,8 @@ dependencies:
 - transformers
 - mtl
 - filepath
+- cheapskate
+- cheapskate-lucid
 
 library:
   source-dirs: src
