@@ -34,7 +34,7 @@ _You probably can use cabal as well_.
 - [ ] Filter '..' on root
 - [ ] Don't show logs (Servant logs some errors, like 404)
 
-```
+```text
 ~/projects
 $ readme
 Serving http://localhost:7000

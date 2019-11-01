@@ -7,8 +7,6 @@ body {
     margin: 0;
     padding: 30px;
     background: #fff;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
-    -webkit-font-smoothing: antialiased
 }
 
 main {
@@ -19,14 +17,25 @@ main {
 .content {
     padding: 40px 48px;
     border: 1px solid #e1e4e8;
-    margin: 20px auto 0;
+    margin: 20px auto 50px;
     overflow-x: scroll;
     max-width: 920px;
     width: 100%;
-    font-family: -apple-system, BlinkMacSystemFont, Helvetica, "Segoe UI", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"
 }
 
-header {
+.monospace {
+    margin: 20px auto 50px;
+    overflow-x: scroll;
+    max-width: 920px;
+    width: 100%;
+}
+
+.explorer {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased
+}
+
+.explorer header {
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap
@@ -157,4 +166,18 @@ header {
         box-sizing: border-box;
         justify-content: flex-start
     }
+}
+
+/* Overrides for bulma */
+.content pre {
+    background-color: #f8f8f8;
+}
+.monospace pre {
+    background-color: #f8f8f8;
+}
+
+.content blockquote {
+    background-color: #fcfcfc;
+    border-left-color: #efefef;
+    color: #6a737d;
 }

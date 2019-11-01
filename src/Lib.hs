@@ -21,11 +21,11 @@ import Lucid
 import qualified Network.Wai.Handler.Warp as Warp
 import Servant
 import Servant.HTML.Lucid
+import qualified Static
 import qualified System.Directory as Dir
 import qualified System.Environment as Env
 import qualified System.FilePath as Path
 import System.FilePath ((</>))
-import qualified Static
 
 serverMain :: Int -> IO ()
 serverMain port = Warp.run port app
@@ -60,7 +60,10 @@ directoryHandler givenPath = do
     (RenderMarkdown path) ->
       liftIO $ withLayout <$> Just <$> renderMarkdown <$> readFile path
     (RenderMonospace path) ->
-      liftIO $ withLayout <$> Just <$> renderMonospace <$> readFile path
+      liftIO $
+        withLayout <$> Just <$> (renderMonospace extension) <$> readFile path
+      where
+        extension = takeExtension path
     (RenderHtml path) -> liftIO $ renderHtml <$> readFile path
     RenderDirectory -> pure $ withLayout Nothing
 
@@ -76,9 +79,16 @@ pathHandler paths = directoryHandler $ List.intercalate "/" paths
 renderPath :: FilePath -> [Breadcrumb] -> [Item] -> Maybe (Html ()) -> Html ()
 renderPath dir crumbs contents fileContent = html_ $ do
   head_ $ do
-    title_ $ toHtml $ "Files within " ++ dir
-    style_ Static.css
     link_ [rel_ "icon", href_ "data:,"]
+    title_ $ toHtml $ "Files within " ++ dir
+    meta_ [name_ "viewport", content_ "width=device-width, initial-scale=1"]
+    -- CSS
+    style_ Static.highlightCSS
+    style_ Static.bulmaCSS
+    style_ Static.css
+    -- JS
+    script_ Static.highlightJS
+    script_ "hljs.initHighlightingOnLoad()"
   body_ $ main_ $ do
     div_ [class_ "explorer"] $ do
       header_ $ do
@@ -86,7 +96,7 @@ renderPath dir crumbs contents fileContent = html_ $ do
           i_ "Index of "
           mapM_ renderBreadcrumb crumbs
       ul_ $ mapM_ renderFileItem contents
-    Maybe.fromMaybe mempty $ fmap (div_ [class_ "content"]) fileContent
+    Maybe.fromMaybe mempty fileContent
 
 renderFileItem :: Item -> Html ()
 renderFileItem (Directory name url) =
@@ -119,10 +129,19 @@ renderBreadcrumb (url, name) =
     $ Path.addTrailingPathSeparator name
 
 renderMarkdown :: String -> Html ()
-renderMarkdown = renderDoc . markdown def . Text.pack
+renderMarkdown = div_ [class_ "content"] . renderDoc . markdown def . Text.pack
 
-renderMonospace :: String -> Html ()
-renderMonospace = pre_ . toHtml . Text.pack
+renderMonospace :: Extension -> String -> Html ()
+renderMonospace "" =
+  div_ [class_ "monospace"] . pre_ . code_ [class_ "text"] . toHtml . Text.pack
+renderMonospace "txt" =
+  div_ [class_ "monospace"] . pre_ . code_ [class_ "text"] . toHtml . Text.pack
+renderMonospace ext =
+  div_ [class_ "monospace"]
+    . pre_
+    . code_ [class_ $ Text.pack ext]
+    . toHtml
+    . Text.pack
 
 renderHtml :: String -> Html ()
 renderHtml = toHtmlRaw
