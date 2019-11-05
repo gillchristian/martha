@@ -9,6 +9,9 @@ import qualified Data.Text as Text
 css :: Text.Text
 css = $(embedStringFile "static/styles.css")
 
+js :: Text.Text
+js = $(embedStringFile "static/code.js")
+
 highlightJS :: Text.Text
 highlightJS = $(embedStringFile "static/highlight.pack.js")
 

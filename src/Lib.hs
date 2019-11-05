@@ -89,14 +89,26 @@ renderPath dir crumbs contents fileContent = html_ $ do
     -- JS
     script_ Static.highlightJS
     script_ "hljs.initHighlightingOnLoad()"
-  body_ $ main_ $ do
-    div_ [class_ "explorer"] $ do
-      header_ $ do
-        h1_ $ do
-          i_ "Index of "
-          mapM_ renderBreadcrumb crumbs
+  body_ $ do
+    -- .header
+    header_ [class_ "header"] $ do
+      h1_ $ do
+        i_ "Index of "
+        mapM_ renderBreadcrumb crumbs
+    main_ $ do
+      -- .explorer
+      div_ [class_ "side explorer"] $ do
+        ul_ $ mapM_ renderFileItem contents
+      -- .content
+      div_ [class_ "content"] $ do
+        -- TODO: better button
+        button_ [class_ "history-toggle"] "Toggle History"
+        Maybe.fromMaybe mempty fileContent
+    -- .history
+    div_ [class_ "side history"] $ do
+      h3_ [class_ "is-size-4"] "History"
       ul_ $ mapM_ renderFileItem contents
-    Maybe.fromMaybe mempty fileContent
+    script_ Static.js
 
 renderFileItem :: Item -> Html ()
 renderFileItem (Directory name url) =
@@ -112,11 +124,17 @@ renderFileItem (Folder name url) =
     $ toHtml
     $ Text.pack
     $ Path.addTrailingPathSeparator name
-renderFileItem (File name url extension) =
+renderFileItem (File name url "md") =
+  li_ 
+    $ a_ 
+      [ class_ $ Text.pack $ "file md",
+        href_ $ Text.pack $ makeAbsolute url
+      ]
+    $ toHtml name
+renderFileItem (File name _ extension) =
   li_
     $ a_
-      [ class_ $ Text.pack $ "file " ++ extension,
-        href_ $ Text.pack $ makeAbsolute url
+      [ class_ $ Text.pack $ "file has-text-grey-light " ++ extension
       ]
     $ toHtml name
 
@@ -129,15 +147,24 @@ renderBreadcrumb (url, name) =
     $ Path.addTrailingPathSeparator name
 
 renderMarkdown :: String -> Html ()
-renderMarkdown = div_ [class_ "content"] . renderDoc . markdown def . Text.pack
+renderMarkdown =
+  div_ [class_ "content-markdown"] . renderDoc . markdown def . Text.pack
 
 renderMonospace :: Extension -> String -> Html ()
 renderMonospace "" =
-  div_ [class_ "monospace"] . pre_ . code_ [class_ "text"] . toHtml . Text.pack
+  div_ [class_ "content-monospace"]
+    . pre_
+    . code_ [class_ "text"]
+    . toHtml
+    . Text.pack
 renderMonospace "txt" =
-  div_ [class_ "monospace"] . pre_ . code_ [class_ "text"] . toHtml . Text.pack
+  div_ [class_ "content-monospace"]
+    . pre_
+    . code_ [class_ "text"]
+    . toHtml
+    . Text.pack
 renderMonospace ext =
-  div_ [class_ "monospace"]
+  div_ [class_ "content-monospace"]
     . pre_
     . code_ [class_ $ Text.pack ext]
     . toHtml
