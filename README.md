@@ -1,7 +1,14 @@
 # Martha
 
-A GitHub inspired static site generator focused on
-[collocated Markdown documentation](#).
+A GitHub inspired static site generator focused on Markdown documentation.
+
+<p align="center">
+<img
+  src="https://github.com/gillchristian/martha/blob/master/assets/all-the-things.jpg"
+  width="500"
+  alt="readme all the things"
+  title="readme all the things \o/" />
+</p>
 
 ## Installation
 
