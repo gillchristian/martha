@@ -1,7 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Static where
+module Static
+  ( css,
+    highlightJS,
+    highlightCSS,
+    bulmaCSS,
+  )
+where
 
 import Data.FileEmbed
 import qualified Data.Text as Text

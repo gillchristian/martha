@@ -7,224 +7,117 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Lib where
+module Lib
+  ( run,
+  )
+where
 
 import Cheapskate (def, markdown)
 import Cheapskate.Lucid (renderDoc)
-import Control.Monad.IO.Class (liftIO)
-import qualified Data.Aeson as Aeson
+import Control.Monad (forM_, when)
+import Data.Bifunctor (bimap)
+import qualified Data.Either as Either
 import qualified Data.List as List
 import qualified Data.Maybe as Maybe
 import qualified Data.Text as Text
 import GHC.Generics (Generic)
 import Lucid
-import qualified Network.Wai.Handler.Warp as Warp
-import Servant
-import Servant.HTML.Lucid
 import qualified Static
 import qualified System.Directory as Dir
 import qualified System.Environment as Env
 import qualified System.FilePath as Path
-import System.FilePath ((</>))
-
-serverMain :: Int -> IO ()
-serverMain port = Warp.run port app
-
-app :: Application
-app = serve readmeAPI readmeServer
-
--- GET /
--- GET /*
-type ReadmeAPI =
-  Get '[HTML] (Html ()) :<|> CaptureAll "path" String :> Get '[HTML] (Html ())
-
-readmeAPI :: Proxy ReadmeAPI
-readmeAPI = Proxy
-
-readmeServer :: Server ReadmeAPI
-readmeServer = rootHandler :<|> pathHandler
-
--- -----------------------------------------------------------------------------
-
-directoryHandler :: FilePath -> Handler (Html ())
-directoryHandler givenPath = do
-  isDir <- liftIO $ Dir.doesDirectoryExist givenPath
-  let directory = applyWhen (not isDir) Path.takeDirectory givenPath
-  basePath <- liftIO $ Dir.makeRelativeToCurrentDirectory directory
-  root <- liftIO $ Path.takeFileName <$> Dir.getCurrentDirectory
-  allContents <- liftIO $ filter (/= ".") <$> Dir.getDirectoryContents directory
-  dirContent <- liftIO $ List.sort <$> traverse (toItem basePath) allContents
-  let crumbs = breadcrumbs ("/", root) basePath
-  let withLayout = renderPath (root </> basePath) crumbs dirContent
-  case whatToRender isDir givenPath dirContent of
-    (RenderMarkdown path) ->
-      liftIO $ withLayout <$> Just <$> renderMarkdown <$> readFile path
-    (RenderMonospace path) ->
-      liftIO $
-        withLayout <$> Just <$> (renderMonospace extension) <$> readFile path
-      where
-        extension = takeExtension path
-    (RenderHtml path) -> liftIO $ renderHtml <$> readFile path
-    RenderDirectory -> pure $ withLayout Nothing
-
-rootHandler :: Handler (Html ())
-rootHandler = directoryHandler "."
-
-pathHandler :: [String] -> Handler (Html ())
-pathHandler [] = rootHandler
-pathHandler paths = directoryHandler $ List.intercalate "/" paths
-
--- -----------------------------------------------------------------------------
-
-renderPath :: FilePath -> [Breadcrumb] -> [Item] -> Maybe (Html ()) -> Html ()
-renderPath dir crumbs contents fileContent = html_ $ do
-  head_ $ do
-    link_ [rel_ "icon", href_ "data:,"]
-    title_ $ toHtml $ "Files within " ++ dir
-    meta_ [name_ "viewport", content_ "width=device-width, initial-scale=1"]
-    -- CSS
-    style_ Static.highlightCSS
-    style_ Static.bulmaCSS
-    style_ Static.css
-    -- JS
-    script_ Static.highlightJS
-    script_ "hljs.initHighlightingOnLoad()"
-  body_ $ main_ $ do
-    div_ [class_ "explorer"] $ do
-      header_ $ do
-        h1_ $ do
-          i_ "Index of "
-          mapM_ renderBreadcrumb crumbs
-      ul_ $ mapM_ renderFileItem contents
-    Maybe.fromMaybe mempty fileContent
-
-renderFileItem :: Item -> Html ()
-renderFileItem (Directory name url) =
-  li_
-    $ a_
-      [class_ "directory", href_ $ Text.pack $ makeAbsolute url]
-    $ toHtml
-    $ Text.pack name
-renderFileItem (Folder name url) =
-  li_
-    $ a_
-      [class_ "folder", href_ $ Text.pack $ makeAbsolute url]
-    $ toHtml
-    $ Text.pack
-    $ Path.addTrailingPathSeparator name
-renderFileItem (File name url extension) =
-  li_
-    $ a_
-      [ class_ $ Text.pack $ "file " ++ extension,
-        href_ $ Text.pack $ makeAbsolute url
-      ]
-    $ toHtml name
-
-renderBreadcrumb :: (FilePath, FilePath) -> Html ()
-renderBreadcrumb (url, name) =
-  a_
-    [href_ $ Text.pack $ makeAbsolute url]
-    $ toHtml
-    $ Text.pack
-    $ Path.addTrailingPathSeparator name
-
-renderMarkdown :: String -> Html ()
-renderMarkdown = div_ [class_ "content"] . renderDoc . markdown def . Text.pack
-
-renderMonospace :: Extension -> String -> Html ()
-renderMonospace "" =
-  div_ [class_ "monospace"] . pre_ . code_ [class_ "text"] . toHtml . Text.pack
-renderMonospace "txt" =
-  div_ [class_ "monospace"] . pre_ . code_ [class_ "text"] . toHtml . Text.pack
-renderMonospace ext =
-  div_ [class_ "monospace"]
-    . pre_
-    . code_ [class_ $ Text.pack ext]
-    . toHtml
-    . Text.pack
-
-renderHtml :: String -> Html ()
-renderHtml = toHtmlRaw
-
--- -----------------------------------------------------------------------------
-
-type Breadcrumb = (FilePath, FilePath)
-
-breadcrumbs :: Breadcrumb -> FilePath -> [Breadcrumb]
-breadcrumbs root baseDir = root : go baseDir []
-  where
-    go :: FilePath -> [(FilePath, FilePath)] -> [(FilePath, FilePath)]
-    go "." acc = acc
-    go "/" acc = acc
-    go base acc = go nextDir $ (base, file) : acc
-      where
-        (dir, file) = Path.splitFileName base
-        nextDir = (Path.dropTrailingPathSeparator dir)
-
-makeAbsolute :: FilePath -> FilePath
-makeAbsolute path
-  | Path.isAbsolute path = path
-  | otherwise = Path.pathSeparator : path
-
-whatToRender :: Bool -> FilePath -> [Item] -> ToRender FilePath
-whatToRender isDir givenPath dirContent =
-  pathToRender $ (,) <$> toRead <*> extension
-  where
-    toRead = fileOrReadme isDir givenPath dirContent
-    extension = fmap takeExtension toRead
+import System.FilePath ((<.>), (</>))
+import Utils (headOr)
 
 type Extension = String
 
-pathToRender :: Maybe (FilePath, Extension) -> ToRender FilePath
-pathToRender (Just (path, "md")) = RenderMarkdown path
-pathToRender (Just (path, "html")) = RenderHtml path
-pathToRender (Just (path, _)) = RenderMonospace path
-pathToRender Nothing = RenderDirectory
+type FileName = FilePath
 
-fileOrReadme :: Bool -> FilePath -> [Item] -> Maybe FilePath
-fileOrReadme True givenPath dirContent =
-  fmap (givenPath </>) $ findReadme dirContent
-fileOrReadme False givenPath _ = Just givenPath
+type FullPath = FilePath
 
-findReadme :: [Item] -> Maybe FilePath
-findReadme contents
-  | null files = Nothing
-  | List.elem "README.md" files = Just "README.md"
-  | List.elem "readme.md" files = Just "readme.md"
-  | List.elem "README.txt" files = Just "README.txt"
-  | List.elem "readme.txt" files = Just "readme.txt"
-  | List.elem "README" files = Just "README"
-  | List.elem "readme" files = Just "readme"
-  | otherwise = Nothing
-  where
-    files = map iName $ filter isFile contents
+type Item = Either File Directory
+
+data Directory
+  = -- | A directory: name, full path and contents (other directories and files)
+    Directory FileName FullPath [Directory] [File]
+  deriving (Show, Eq, Ord, Generic)
+
+data File
+  = -- | A file: name, full path and extension
+    File FileName FullPath Extension
+  deriving (Show, Eq, Ord, Generic)
+
+fPath :: File -> FilePath
+fPath (File _ path _) = path
+
+dName :: Directory -> FilePath
+dName (Directory name _ _ _) = name
 
 -- -----------------------------------------------------------------------------
 
-data Item
-  = Directory -- '.' and '..' are directories any other is Folder
-      { iName :: FilePath,
-        iUrl :: FilePath
-      }
-  | Folder
-      {iName :: FilePath, iUrl :: FilePath}
-  | File
-      { iName :: FilePath,
-        iUrl :: FilePath,
-        iExtension :: String
-      }
-  deriving (Show, Eq, Ord, Generic, Aeson.ToJSON, Aeson.FromJSON)
+traverseDirectory :: FilePath -> FilePath -> IO Directory
+traverseDirectory path name = do
+  contents <- filter (not . isIgnoredPath) <$> Dir.getDirectoryContents path
+  (files, dirs) <-
+    normaliseItems <$> Maybe.catMaybes <$> traverse (toItem path) contents
+  pure $ Directory name path dirs files
 
-isFile :: Item -> Bool
-isFile (File _ _ _) = True
-isFile _ = False
+toItem :: FilePath -> FilePath -> IO (Maybe Item)
+toItem basePath name = do
+  let path = Path.normalise $ basePath </> name
+  exists <- Dir.doesPathExist path
+  isSym <- Dir.pathIsSymbolicLink path
+  isDir <- Dir.doesDirectoryExist path
+  if not exists || isSym
+    then pure $ Nothing
+    else
+      if isDir
+        then Just <$> Right <$> traverseDirectory path name
+        else pure $ Just $ Left $ File name path (takeExtension name)
 
-data ToRender a
-  = RenderMarkdown a
-  | RenderHtml a
-  | RenderMonospace a
-  | RenderDirectory
-  deriving (Show, Eq)
+isEmpty :: Directory -> Bool
+isEmpty (Directory _ _ [] []) = True
+isEmpty _ = False
+
+normaliseFiles :: [File] -> [File]
+normaliseFiles = List.sort . filter isMdFile
+
+normaliseDirs :: [Directory] -> [Directory]
+normaliseDirs = List.sort . filter (not . isEmpty)
+
+normaliseItems :: [Item] -> ([File], [Directory])
+normaliseItems = bimap normaliseFiles normaliseDirs . Either.partitionEithers
+
+-- TODO: filter by '.gitignore'
+isIgnoredPath :: FilePath -> Bool
+isIgnoredPath "." = True
+isIgnoredPath ".." = True
+isIgnoredPath ".git" = True
+isIgnoredPath "node_modules" = True
+isIgnoredPath ".stack-work" = True
+isIgnoredPath _ = False
+
+isMdFile :: File -> Bool
+isMdFile (File _ _ "md") = True
+isMdFile _ = False
+
+-- -----------------------------------------------------------------------------
+
+data ToCEntry
+  = -- | A ToC Entry contains the parts of the directory's path and all the files in it
+    ToCEntry [FilePath] [File]
+
+toc :: Directory -> [ToCEntry]
+toc = go []
+  where
+    go :: [FilePath] -> Directory -> [ToCEntry]
+    go _ (Directory _ _ [] []) = []
+    go acc (Directory name _ [] files) = [ToCEntry (reverse $ name : acc) files]
+    go acc (Directory name _ dirs []) = go (name : acc) =<< dirs
+    go acc (Directory name _ dirs files) =
+      (ToCEntry (reverse $ name : acc) files) : (go (name : acc) =<< dirs)
+
+-- -----------------------------------------------------------------------------
 
 takeExtension :: FilePath -> Extension
 takeExtension path =
@@ -232,40 +125,123 @@ takeExtension path =
     ('.' : extension) -> extension
     extension -> extension
 
--- -----------------------------------------------------------------------------
-
-toItem :: FilePath -> FilePath -> IO Item
-toItem basePath name = do
-  canonical <- Dir.canonicalizePath $ basePath </> name
-  url <- Dir.makeRelativeToCurrentDirectory canonical
-  isDir <- Dir.doesDirectoryExist url
-  pure $
-    if isDir
-      then toItem' name url Nothing
-      else toItem' name url $ Just (Path.takeExtension name)
-
-toItem' :: FilePath -> FilePath -> Maybe String -> Item
-toItem' ".." url _ = Directory ".." url
-toItem' "." url _ = Directory "." url
-toItem' name url Nothing = Folder name url
-toItem' name url (Just ('.' : extension)) = File name url extension
-toItem' name url (Just extension) = File name url extension
+makeAbsolute :: FilePath -> FilePath
+makeAbsolute path
+  | Path.isAbsolute path = path
+  | otherwise = Path.pathSeparator : path
 
 -- -----------------------------------------------------------------------------
 
-headOr :: a -> [a] -> a
-headOr a [] = a
-headOr _ (a : _) = a
+type Html' = Html ()
 
-applyWhen :: Bool -> (a -> a) -> a -> a
-applyWhen True f a = f a
-applyWhen False _ a = a
+renderToC :: [ToCEntry] -> Html'
+renderToC [] = div_ [class_ "toc"] mempty
+renderToC entries =
+  div_ [class_ "toc", style_ "font-family: monospace; display: flex;"] $ do
+    ul_ [class_ "directories"] $ do
+      mapM_ renderEntry entries
+
+renderEntry :: ToCEntry -> Html'
+renderEntry (ToCEntry dirs files) =
+  li_ [class_ "li-directory"] $ do
+    mapM_ renderDirCrumb dirs
+    ul_ [class_ "files"] $ do
+      mapM_ renderFileEntry files
+
+renderDirCrumb :: FilePath -> Html'
+renderDirCrumb path = do
+  span_ . toHtml . Text.pack $ path
+  span_ "/"
+
+renderFileEntry :: File -> Html'
+renderFileEntry (File name url _) =
+  li_ [class_ "li-file"] $
+    a_
+      [href_ $ Text.pack $ (makeAbsolute url) <.> "html"]
+      (toHtml $ Text.pack name)
+
+empty :: Text.Text
+empty = ""
+
+renderPath :: Directory -> Maybe Html' -> Html'
+renderPath rootDir mContent = html_ $ do
+  head_ $ do
+    link_ [rel_ "icon", href_ "data:,"]
+    title_ $ toHtml $ "Markdown within " ++ dName rootDir
+    meta_ [name_ "viewport", content_ "width=device-width, initial-scale=1"]
+    -- CSS
+    link_ [rel_ "stylesheet", type_ "text/css", href_ "/highlight.css"]
+    link_ [rel_ "stylesheet", type_ "text/css", href_ "/bulma.css"]
+    link_ [rel_ "stylesheet", type_ "text/css", href_ "/styles.css"]
+    -- JS
+    script_ [src_ "/highlight.js"] empty
+    script_ "hljs.initHighlightingOnLoad()"
+  body_ [class_ "Site"] $ do
+    header_ [class_ "header"] $ do
+      h1_ $ do
+        i_ $ toHtml $ Text.pack ("Index of " ++ dName rootDir)
+    main_ [class_ "Site-content"] $ do
+      renderToC . toc $ rootDir
+      Maybe.fromMaybe mempty mContent
+    footer_ empty
+
+renderMarkdown :: String -> Html'
+renderMarkdown =
+  div_ [class_ "content"] . renderDoc . markdown def . Text.pack
 
 -- -----------------------------------------------------------------------------
+
+output :: Directory -> Directory -> IO ()
+output rootDir (Directory _ path [] []) = outputIndex rootDir path []
+output rootDir (Directory _ path dirs files) = do
+  let outPath = Path.normalise (".readme" </> path)
+  putStrLn $ "Building: " ++ path
+  Dir.createDirectory outPath
+  forM_ dirs (output rootDir)
+  forM_ files (outputFile rootDir)
+  outputIndex rootDir path files
+
+outputFile :: Directory -> File -> IO ()
+outputFile rootDir (File _ path _) = do
+  content <- Just <$> renderMarkdown <$> readFile path
+  Lucid.renderToFile
+    (".readme" </> path <.> "html")
+    (renderPath rootDir content)
+
+outputIndex :: Directory -> FilePath -> [File] -> IO ()
+outputIndex rootDir dirPath files = do
+  mContent <-
+    traverse
+      (fmap renderMarkdown . readFile . fPath)
+      (List.find isReadme files)
+  Lucid.renderToFile
+    (".readme" </> Path.takeDirectory dirPath </> "index.html")
+    (renderPath rootDir mContent)
+
+isReadme :: File -> Bool
+isReadme (File "README.md" _ _) = True
+isReadme (File "readme.md" _ _) = True
+isReadme _ = False
+
+-- -----------------------------------------------------------------------------
+
+staticFiles :: IO ()
+staticFiles = do
+  writeFile (".readme" </> "highlight.js") $ Text.unpack Static.highlightJS
+  writeFile (".readme" </> "highlight.css") $ Text.unpack Static.highlightCSS
+  writeFile (".readme" </> "bulma.css") $ Text.unpack Static.bulmaCSS
+  writeFile (".readme" </> "styles.css") $ Text.unpack Static.css
 
 run :: IO ()
 run = do
   path <- headOr "." <$> Env.getArgs
   Dir.setCurrentDirectory path
-  putStrLn "Serving http://localhost:7000"
-  serverMain 7000
+  cwd <- Dir.getCurrentDirectory
+  let rootName = Path.takeFileName cwd
+  basePath <- Dir.makeRelativeToCurrentDirectory cwd
+  hasReadmeDir <- Dir.doesPathExist ".readme"
+  when hasReadmeDir $ Dir.removeDirectoryRecursive ".readme"
+  putStrLn $ "Traversing \"" ++ rootName ++ "\" to find Markdown files"
+  dir <- traverseDirectory basePath rootName
+  output dir dir
+  staticFiles
