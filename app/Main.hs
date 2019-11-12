@@ -1,6 +1,6 @@
 module Main (main) where
 
-import Lib
+import qualified Martha
 
 main :: IO ()
-main = run
+main = Martha.run

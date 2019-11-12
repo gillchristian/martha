@@ -1,11 +1,11 @@
-name:                readme
+name:                martha
 version:             0.0.1.0
-github:              "gillchristian/readme"
+github:              "gillchristian/martha"
 license:             MIT
 author:              "gillchristian"
 maintainer:          "gillchristian@gmail.com"
 copyright:           "2019 Christian Gill"
-description:         Please see the README on GitHub at <https://github.com/gillchristian/readme#readme>
+description:         Please see the README on GitHub at <https://github.com/gillchristian/martha#readme>
 
 extra-source-files:
 - README.md
@@ -28,7 +28,7 @@ library:
   source-dirs: src
 
 executables:
-  readme:
+  martha:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -45,7 +45,7 @@ executables:
     - -Wmissing-export-lists
     - -fhide-source-paths
     dependencies:
-    - readme
+    - martha
 
 tests:
   serve-test:
@@ -56,4 +56,4 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - readme
+    - martha

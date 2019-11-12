@@ -1,51 +1,31 @@
-# readme
+# Martha
 
-A [serve](https://github.com/zeit/serve) & GitHub inspired file explorer focused
-on [collocated Markdown documentation](#).
-
-:warning: **WARNING Work in Progress** :warning:
+A GitHub inspired static site generator explorer focused on
+[collocated Markdown documentation](#).
 
 ## Installation
 
 At the moment the only way to install is building from source.
 
 ```bash
-git clone git@github.com:gillchristian/readme.git
-cd readme
+git clone git@github.com:gillchristian/martha.git
+cd martha
 stack install .
 ```
 
 _You probably can use cabal as well_.
 
-## TODO
+## Why the name?
 
-**Features**
+<p align="center">
+<img
+  src="https://github.com/gillchristian/martha/blob/master/assets/martha.gif"
+  alt="marthaaa"
+  title="marthaaa" />
+</p>
 
-- [x] Syntax highlight
-- [x] Discovery of Markdown files
-- [x] Static site generation (only Markdown files + tree structure)
-- [x] README.md/readme.md file should be "index.html" of the directory (render
-      ToC when directory is empty of files)
-- [ ] Rename to Marta !!!
-- [ ] Proper CLI
-- [ ] .gitignore aware (opt-out)
-- [ ] Fuzzy finder
-- [ ] ...
+<small>
 
-**Improvements / fixes**
+Credit to [fvictorio](https://github.com/fvictorio/) for coming up with it.
 
-- [x] Inline CSS =/
-      ([Data.FileEmbed](http://hackage.haskell.org/package/file-embed-0.0.11/docs/Data-FileEmbed.html))
-      :tada:
-- [x] Move JS & CSS to files (no need to have them inline anymore)
-- [ ] Highlight current file on ToC
-- [ ] Responsiveness & layout (e.g. toggleable ToC)
-- [ ] Support GitHub Flavored Markdown (emojis _et al_)
-- [ ] Windows compatibility :tm: (paths handling probably broken)
-
-**Code quality**
-
-- [x] Cleanup arguments of `renderPath`
-- [x] Cleanup unused dependencies from `package.yml`
-- [ ] Minimize IO usage :smirk:
-- [ ] Library vs. App
+</small>
