@@ -1,6 +1,6 @@
 # Martha
 
-A GitHub inspired static site generator explorer focused on
+A GitHub inspired static site generator focused on
 [collocated Markdown documentation](#).
 
 ## Installation
