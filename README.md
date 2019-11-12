@@ -19,44 +19,42 @@ _You probably can use cabal as well_.
 
 ## TODO
 
+**Features**
+
+- [x] Syntax highlight
+- [x] Discovery of Markdown files
+- [x] Static site generation (only Markdown files + tree structure)
+- [ ] Proper CLI
+- [ ] Rename to Marta !!!
+- [ ] .gitignore aware (opt-out)
+- [ ] README.md/readme.md file should be "index.html" of the directory (render
+      ToC when directory is empty of files)
+- [ ] Fuzzy finder
+- [ ] ...
+
 **Improvements / fixes**
 
 - [x] Inline CSS =/
       ([Data.FileEmbed](http://hackage.haskell.org/package/file-embed-0.0.11/docs/Data-FileEmbed.html))
       :tada:
-- [x] Render HTML views
-- [ ] Render HTML views should be opt-out (I might want to see it as code
-      instead, e.g. raw vs. rendered on GitHub)
-- [ ] Serve files (e.g. CSS, JS) "normally" for HTML views !!!
-- [ ] Handle 404s
-- [ ] Handle media files (as HTML with their own standalone view)
-- [ ] .gitignore aware (opt-out)
-- [ ] Filter '..' on root
-- [ ] Don't show logs (Servant logs some errors, like 404)
-
-```text
-~/projects
-$ readme
-Serving http://localhost:7000
-Users: getDirectoryContents:openDirStream: does not exist (No such file or directory)
-favicon.ico: openFile: does not exist (No such file or directory)
-sample: openFile: does not exist (No such file or directory)
-favicon.ico: openFile: does not exist (No such file or directory)
-```
+- [x] Move JS & CSS to files (no need to have them inline anymore)
+- [ ] Highlight current file on ToC
+- [ ] Responsiveness & layout (e.g. toggleable ToC)
+- [ ] Support GitHub Flavored Markdown (emojis _et al_)
+- [ ] Windows compatibility :tm: (paths handling probably broken)
 
 **Code quality**
 
-- [ ] 'Lift' stuff to setup function (e.g. `Dir.getCurrentDirectory`)
 - [ ] Minimize IO usage :smirk:
-- [ ] Library vs. app
+- [ ] Library vs. App
+- [ ] Code structure
+- [ ] Cleanup arguments of `renderPath`
+- [ ] Generate ToC only once (pass as argument) \*
+- [ ] Cleanup unused dependencies from `package.yml`
 
-**Features**
+<small>
 
-- [ ] Proper CLI
-- [ ] History pannel (keep track of visited files)
-- [ ] Syntax highlight
-- [ ] Fuzzy finder
-- [ ] Discovery of Markdown files
-- [ ] Static site generation (only Markdown files + tree structure)
-- [ ] Support GitHub flavored markdown (and emojis)
-- [ ] ...
+\* Is that "optimization" needed? Shouldn't lazyness/compiler optimizations take
+care of it.
+
+</small>

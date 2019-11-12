@@ -1,3 +1,10 @@
 .stack-work/
-readme.cabal
+node_modules/
 *~
+readme.cabal
+
+# readme's default output dir
+.readme
+
+# test directory
+traverse/

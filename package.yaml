@@ -8,7 +8,7 @@ copyright:           "2019 Christian Gill"
 description:         Please see the README on GitHub at <https://github.com/gillchristian/readme#readme>
 
 extra-source-files:
-- readme.md
+- README.md
 
 dependencies:
 - base >= 4.7 && < 5
@@ -16,13 +16,7 @@ dependencies:
 - aeson
 - bytestring
 - text
-- http-types
-- http-client
-- servant
-- servant-server
-- servant-lucid
 - lucid
-- warp
 - transformers
 - mtl
 - filepath
@@ -42,6 +36,14 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     - -Wall
+    - -Wcompat
+    - -Widentities
+    - -Wincomplete-uni-patterns
+    - -Wincomplete-record-updates
+    - -Wpartial-fields
+    - -Wredundant-constraints
+    - -Wmissing-export-lists
+    - -fhide-source-paths
     dependencies:
     - readme
 
