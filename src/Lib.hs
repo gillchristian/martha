@@ -57,7 +57,7 @@ dName (Directory name _ _ _) = name
 
 traverseDirectory :: FilePath -> FilePath -> IO Directory
 traverseDirectory path name = do
-  contents <- filter (not . isIgnoredFile) <$> Dir.getDirectoryContents path
+  contents <- filter (not . isIgnoredPath) <$> Dir.getDirectoryContents path
   (files, dirs) <-
     normaliseItems <$> Maybe.catMaybes <$> traverse (toItem path) contents
   pure $ Directory name path dirs files
@@ -89,13 +89,13 @@ normaliseItems :: [Item] -> ([File], [Directory])
 normaliseItems = bimap normaliseFiles normaliseDirs . Either.partitionEithers
 
 -- TODO: filter by '.gitignore'
-isIgnoredFile :: FilePath -> Bool
-isIgnoredFile "." = True
-isIgnoredFile ".." = True
-isIgnoredFile ".git" = True
-isIgnoredFile "node_modules" = True
-isIgnoredFile ".stack-work" = True
-isIgnoredFile _ = False
+isIgnoredPath :: FilePath -> Bool
+isIgnoredPath "." = True
+isIgnoredPath ".." = True
+isIgnoredPath ".git" = True
+isIgnoredPath "node_modules" = True
+isIgnoredPath ".stack-work" = True
+isIgnoredPath _ = False
 
 isMdFile :: File -> Bool
 isMdFile (File _ _ "md") = True
