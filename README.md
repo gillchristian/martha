@@ -1,14 +1,8 @@
 # Martha
 
-A GitHub inspired static site generator focused on Markdown documentation.
+A GitHub inspired static site generator for on onsite Markdown documentation.
 
-<p align="center">
-<img
-  src="https://github.com/gillchristian/martha/blob/master/assets/all-the-things.jpg"
-  width="500"
-  alt="readme all the things"
-  title="readme all the things \o/" />
-</p>
+![readme all the things](https://github.com/gillchristian/martha/blob/master/assets/all-the-things.jpg)
 
 ## Installation
 
@@ -24,12 +18,7 @@ _You probably can use cabal as well_.
 
 ## Why the name?
 
-<p align="center">
-<img
-  src="https://github.com/gillchristian/martha/blob/master/assets/martha.gif"
-  alt="marthaaa"
-  title="marthaaa" />
-</p>
+![marthaaa](https://github.com/gillchristian/martha/blob/master/assets/martha.gif)
 
 <small>
 
