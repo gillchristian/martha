@@ -24,11 +24,11 @@ _You probably can use cabal as well_.
 - [x] Syntax highlight
 - [x] Discovery of Markdown files
 - [x] Static site generation (only Markdown files + tree structure)
-- [ ] Proper CLI
-- [ ] Rename to Marta !!!
-- [ ] .gitignore aware (opt-out)
-- [ ] README.md/readme.md file should be "index.html" of the directory (render
+- [x] README.md/readme.md file should be "index.html" of the directory (render
       ToC when directory is empty of files)
+- [ ] Rename to Marta !!!
+- [ ] Proper CLI
+- [ ] .gitignore aware (opt-out)
 - [ ] Fuzzy finder
 - [ ] ...
 
@@ -45,16 +45,7 @@ _You probably can use cabal as well_.
 
 **Code quality**
 
+- [x] Cleanup arguments of `renderPath`
+- [x] Cleanup unused dependencies from `package.yml`
 - [ ] Minimize IO usage :smirk:
 - [ ] Library vs. App
-- [ ] Code structure
-- [ ] Cleanup arguments of `renderPath`
-- [ ] Generate ToC only once (pass as argument) \*
-- [ ] Cleanup unused dependencies from `package.yml`
-
-<small>
-
-\* Is that "optimization" needed? Shouldn't lazyness/compiler optimizations take
-care of it.
-
-</small>

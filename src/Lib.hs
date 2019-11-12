@@ -183,7 +183,7 @@ renderPath rootDir mContent = html_ $ do
     main_ [class_ "Site-content"] $ do
       renderToC . toc $ rootDir
       Maybe.fromMaybe mempty mContent
-    footer_ ""
+    footer_ empty
 
 renderMarkdown :: String -> Html'
 renderMarkdown =
