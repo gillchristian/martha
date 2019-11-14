@@ -6,7 +6,11 @@ A GitHub inspired static site generator for on onsite Markdown documentation.
 
 ## Installation
 
-At the moment the only way to install is building from source.
+Binary for Mac is provided in the
+[releases](https://github.com/gillchristian/martha/releases).
+
+At the moment the only way to install is building for other platforms is
+building from source.
 
 ```bash
 git clone git@github.com:gillchristian/martha.git
