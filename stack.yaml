@@ -4,7 +4,5 @@ packages:
 - .
 
 extra-deps:
-- github: alpacaaa/zero-bullshit-haskell
-  commit: master
-  subdirs:
-    - library
+- git: git@github.com:gillchristian/cmark-gfm-hs.git
+  commit: 0a11435b59047cfd3bfa005640812842367ccafa

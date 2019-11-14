@@ -5,21 +5,19 @@
 
 packages:
 - completed:
-    size: 144886
-    subdir: library
-    url: https://github.com/alpacaaa/zero-bullshit-haskell/archive/master.tar.gz
     cabal-file:
-      size: 2123
-      sha256: 678943898d50683852beb220f9d12c130122a45f18fd041dd7a05c8ee59c39a1
-    name: zero-bullshit
-    version: 0.1.0.0
-    sha256: 13863bea3e9d0809443d7d7f32f669fecbdf4bc25d7b804b9e2a23e7a97fc323
+      size: 5191
+      sha256: fb3f55b1db2e3cd121ec83bc97c06f0a8468623058b5876f8c750c61548461b8
+    name: cmark-gfm
+    version: 0.2.0
+    git: git@github.com:gillchristian/cmark-gfm-hs.git
     pantry-tree:
-      size: 166
-      sha256: 8031a21ba83a84bbcecf003f41189cc0bce464338e6bcf7743ce0361b439fe1a
+      size: 4805
+      sha256: 63056cfc3948eb3dbf7a71af36931675982e2dccb711613f73884cf05ca37add
+    commit: 0a11435b59047cfd3bfa005640812842367ccafa
   original:
-    subdir: library
-    url: https://github.com/alpacaaa/zero-bullshit-haskell/archive/master.tar.gz
+    git: git@github.com:gillchristian/cmark-gfm-hs.git
+    commit: 0a11435b59047cfd3bfa005640812842367ccafa
 snapshots:
 - completed:
     size: 524786

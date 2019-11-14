@@ -20,9 +20,8 @@ dependencies:
 - transformers
 - mtl
 - filepath
-- cheapskate
-- cheapskate-lucid
 - file-embed
+- cmark-gfm
 
 library:
   source-dirs: src

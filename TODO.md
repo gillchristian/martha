@@ -12,7 +12,8 @@
 - [ ] .gitignore aware (opt-out)
 - [ ] Fuzzy finder
 - [ ] Generate output in place (instead of in a separate directory)
-- [ ] Upload to Netlify/Now/.etc
+- [ ] Deploy to Netlify/Now/.etc
+- [ ] Plugin system: MDX support? Customize the ToC?
 - [ ] ...
 
 **Improvements / fixes** :bug:
@@ -21,9 +22,10 @@
       ([Data.FileEmbed](http://hackage.haskell.org/package/file-embed-0.0.11/docs/Data-FileEmbed.html))
       :tada:
 - [x] Move JS & CSS to files (no need to have them inline anymore)
+- [x] Support GitHub Flavored Markdown
 - [ ] Highlight current file on ToC
 - [ ] Responsiveness & layout (e.g. toggleable ToC)
-- [ ] Support GitHub Flavored Markdown (emojis _et al_)
+- [ ] Support emoji (`:pizza: -> 🍕`)
 - [ ] Run `traverseDirectory`/`output` in parallel
 - [ ] Windows compatibility :tm: (paths handling probably broken)
 - [ ] Build step for JS/CSS (e.g. minify)
@@ -33,5 +35,11 @@
 
 - [x] Cleanup arguments of `renderPath`
 - [x] Cleanup unused dependencies from `package.yml`
+- [ ] Tests
 - [ ] Minimize IO usage :smirk:
 - [ ] Library vs. App
+
+**Repo** :snowboarder:
+
+- [ ] Automate adding binaries to releases
+- [ ] Support mainstream install methods: through brew / npm? / apt-get

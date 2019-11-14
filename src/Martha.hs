@@ -13,14 +13,14 @@ module Martha
   )
 where
 
-import Cheapskate (def, markdown)
-import Cheapskate.Lucid (renderDoc)
+import qualified CMarkGFM as GFM
 import Control.Monad (forM_, when)
 import Data.Bifunctor (bimap)
 import qualified Data.Either as Either
 import qualified Data.List as List
 import qualified Data.Maybe as Maybe
 import qualified Data.Text as Text
+import qualified Data.Text.IO as Text
 import GHC.Generics (Generic)
 import Lucid
 import qualified Static
@@ -138,7 +138,7 @@ type Html' = Html ()
 renderToC :: [ToCEntry] -> Html'
 renderToC [] = div_ [class_ "toc"] mempty
 renderToC entries =
-  div_ [class_ "toc", style_ "font-family: monospace; display: flex;"] $ do
+  div_ [class_ "toc"] $ do
     ul_ [class_ "directories"] $ do
       mapM_ renderEntry entries
 
@@ -187,9 +187,23 @@ renderPath rootDir mContent = html_ $ do
       Maybe.fromMaybe mempty mContent
     footer_ ""
 
-renderMarkdown :: String -> Html'
+gfmOptions :: [GFM.CMarkOption]
+gfmOptions = [GFM.optSmart]
+
+gfmExtensions :: [GFM.CMarkExtension]
+gfmExtensions =
+  [ GFM.extStrikethrough,
+    GFM.extTable,
+    GFM.extTaskList,
+    GFM.extAutolink,
+    GFM.extTagfilter
+  ]
+
+renderMarkdown :: Text.Text -> Html'
 renderMarkdown =
-  div_ [class_ "content"] . renderDoc . markdown def . Text.pack
+  div_ [class_ "content"]
+    . toHtmlRaw
+    . (GFM.commonmarkToHtml gfmOptions gfmExtensions)
 
 -- -----------------------------------------------------------------------------
 
@@ -205,7 +219,7 @@ output rootDir (Directory _ path dirs files) = do
 
 outputFile :: Directory -> File -> IO ()
 outputFile rootDir (File _ path _) = do
-  content <- Just <$> renderMarkdown <$> readFile path
+  content <- Just <$> renderMarkdown <$> Text.readFile path
   Lucid.renderToFile
     (".martha" </> path <.> "html")
     (renderPath rootDir content)
@@ -214,7 +228,7 @@ outputIndex :: Directory -> FilePath -> [File] -> IO ()
 outputIndex rootDir dirPath files = do
   mContent <-
     traverse
-      (fmap renderMarkdown . readFile . fPath)
+      (fmap renderMarkdown . Text.readFile . fPath)
       (List.find isReadme files)
   Lucid.renderToFile
     (".martha" </> Path.takeDirectory dirPath </> "index.html")
