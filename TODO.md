@@ -26,10 +26,31 @@
 - [ ] Highlight current file on ToC
 - [ ] Responsiveness & layout (e.g. toggleable ToC)
 - [ ] Support emoji (`:pizza: -> 🍕`)
+      [emoji package](http://hackage.haskell.org/package/emoji)
 - [ ] Run `traverseDirectory`/`output` in parallel
 - [ ] Windows compatibility :tm: (paths handling probably broken)
 - [ ] Build step for JS/CSS (e.g. minify)
 - [ ] Write to pwd (instead of the provided path)
+- [ ] `index.html` in the wrong directory (seems like it's moving one directory
+      up for everything)
+
+      # the following directory
+      foo/
+          bar/
+              README.md
+
+      # produces this output
+      foo/
+          bar/
+              README.md.html
+          index.html         # with the contents of bar/README.md.html
+
+      # expected output
+      foo/
+          bar/
+              README.md.html
+              index.html     # with the contents of bar/README.md.html
+          index.html         # empty content (since foo/ does not have a README)
 
 **Code quality** :nail_care:
 

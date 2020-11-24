@@ -10,11 +10,16 @@
 module Martha
   ( run,
     runMartha,
+    App,
+    parseGitignore,
+    isIgnored,
   )
 where
 
 import qualified CMarkGFM as GFM
 import Control.Monad (forM_, when)
+import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Reader (ReaderT, asks, runReaderT)
 import Data.Bifunctor (bimap)
 import qualified Data.Either as Either
 import qualified Data.List as List
@@ -28,7 +33,8 @@ import qualified System.Directory as Dir
 import qualified System.Environment as Env
 import qualified System.FilePath as Path
 import System.FilePath ((<.>), (</>))
-import Utils (headOr)
+import qualified System.FilePath.Glob as Glob
+import Utils ((&&^), headOr, (||^))
 
 type Extension = String
 
@@ -54,21 +60,54 @@ fPath (File _ path _) = path
 dName :: Directory -> FilePath
 dName (Directory name _ _ _) = name
 
+-- | Application environment
+data AppEnv
+  = AppEnv
+      {envGitignore :: Gitignore}
+
+type App = ReaderT AppEnv IO
+
 -- -----------------------------------------------------------------------------
 
-traverseDirectory :: FilePath -> FilePath -> IO Directory
+-- | A list of patterns to ignore
+type Gitignore = [Glob.Pattern]
+
+parseGitignore :: Text.Text -> Gitignore
+parseGitignore =
+  fmap (Glob.compile . Path.dropTrailingPathSeparator . Path.normalise . Text.unpack)
+    . filter (not . Text.isPrefixOf "#" &&^ not . Text.null)
+    . fmap (Text.strip)
+    . Text.lines
+
+isIgnored :: Gitignore -> FilePath -> FilePath -> Bool
+isIgnored _ _ "." = True
+isIgnored _ _ ".." = True
+isIgnored _ _ ".git" = True
+isIgnored patterns basePath path =
+  any (matchName ||^ matchPath) patterns
+  where
+    matchName = (flip Glob.match) path
+    matchPath = (flip Glob.match) $ Path.normalise (basePath </> path)
+
+-- -----------------------------------------------------------------------------
+
+traverseDirectory :: FilePath -> FilePath -> App Directory
 traverseDirectory path name = do
-  contents <- filter (not . isIgnoredPath) <$> Dir.getDirectoryContents path
+  gitignore <- asks envGitignore
+  contents <-
+    filter (not . isIgnored gitignore path)
+      <$> fmap Path.dropTrailingPathSeparator -- TODO: should I do it?
+      <$> (liftIO $ Dir.getDirectoryContents path)
   (files, dirs) <-
     normaliseItems <$> Maybe.catMaybes <$> traverse (toItem path) contents
   pure $ Directory name path dirs files
 
-toItem :: FilePath -> FilePath -> IO (Maybe Item)
+toItem :: FilePath -> FilePath -> App (Maybe Item)
 toItem rootPath name = do
   let path = Path.normalise $ rootPath </> name
-  exists <- Dir.doesPathExist path
-  isSym <- Dir.pathIsSymbolicLink path
-  isDir <- Dir.doesDirectoryExist path
+  exists <- liftIO $ Dir.doesPathExist path
+  isSym <- liftIO $ Dir.pathIsSymbolicLink path
+  isDir <- liftIO $ Dir.doesDirectoryExist path
   if not exists || isSym
     then pure $ Nothing
     else
@@ -88,15 +127,6 @@ normaliseDirs = List.sort . filter (not . isEmpty)
 
 normaliseItems :: [Item] -> ([File], [Directory])
 normaliseItems = bimap normaliseFiles normaliseDirs . Either.partitionEithers
-
--- TODO: filter by '.gitignore'
-isIgnoredPath :: FilePath -> Bool
-isIgnoredPath "." = True
-isIgnoredPath ".." = True
-isIgnoredPath ".git" = True
-isIgnoredPath "node_modules" = True
-isIgnoredPath ".stack-work" = True
-isIgnoredPath _ = False
 
 isMdFile :: File -> Bool
 isMdFile (File _ _ "md") = True
@@ -145,7 +175,8 @@ renderToC entries =
 renderEntry :: ToCEntry -> Html'
 renderEntry (ToCEntry dirs files) =
   li_ [class_ "li-directory"] $ do
-    mapM_ renderDirCrumb dirs
+    div_ [class_ "directory"] $ do
+      mapM_ renderDirCrumb dirs
     ul_ [class_ "files"] $ do
       mapM_ renderFileEntry files
 
@@ -161,11 +192,8 @@ renderFileEntry (File name url _) =
       [href_ $ Text.pack $ (makeAbsolute url) <.> "html"]
       (toHtml $ Text.pack name)
 
-empty :: Text.Text
-empty = ""
-
-renderPath :: Directory -> Maybe Html' -> Html'
-renderPath rootDir mContent = html_ $ do
+renderPath :: Directory -> Maybe Html' -> FilePath -> Html'
+renderPath rootDir mContent path = html_ $ do
   head_ $ do
     link_ [rel_ "icon", href_ "data:,"]
     title_ $ toHtml $ "Markdown within " ++ dName rootDir
@@ -175,7 +203,7 @@ renderPath rootDir mContent = html_ $ do
     link_ [rel_ "stylesheet", type_ "text/css", href_ "/bulma.css"]
     link_ [rel_ "stylesheet", type_ "text/css", href_ "/styles.css"]
     -- JS
-    script_ [src_ "/highlight.js"] empty
+    script_ [src_ "/highlight.js"] Text.empty
     script_ "hljs.initHighlightingOnLoad()"
   body_ [class_ "Site"] $ do
     header_ [class_ "header"] $ do
@@ -184,26 +212,26 @@ renderPath rootDir mContent = html_ $ do
         a_ [href_ "/"] $ toHtml $ Text.pack (dName rootDir ++ "/")
     main_ [class_ "Site-content"] $ do
       renderToC . toc $ rootDir
-      Maybe.fromMaybe mempty mContent
+      div_ [class_ "content content--file"] $ do
+        h3_ [class_ "content--file-name"] $ toHtml (Text.pack path)
+        hr_ []
+        Maybe.fromMaybe mempty mContent
     footer_ ""
 
-gfmOptions :: [GFM.CMarkOption]
-gfmOptions = [GFM.optSmart]
-
-gfmExtensions :: [GFM.CMarkExtension]
-gfmExtensions =
-  [ GFM.extStrikethrough,
-    GFM.extTable,
-    GFM.extTaskList,
-    GFM.extAutolink,
-    GFM.extTagfilter
-  ]
-
-renderMarkdown :: Text.Text -> Html'
+renderMarkdown :: Text.Text -> Html ()
 renderMarkdown =
-  div_ [class_ "content"]
-    . toHtmlRaw
-    . (GFM.commonmarkToHtml gfmOptions gfmExtensions)
+  toHtmlRaw
+    . ( GFM.commonmarkToHtml
+          [ GFM.optSmart,
+            GFM.optUnsafe
+          ]
+          [ GFM.extStrikethrough,
+            GFM.extTable,
+            GFM.extTaskList,
+            GFM.extAutolink,
+            GFM.extTagfilter
+          ]
+      )
 
 -- -----------------------------------------------------------------------------
 
@@ -222,7 +250,7 @@ outputFile rootDir (File _ path _) = do
   content <- Just <$> renderMarkdown <$> Text.readFile path
   Lucid.renderToFile
     (".martha" </> path <.> "html")
-    (renderPath rootDir content)
+    (renderPath rootDir content $ dName rootDir </> path)
 
 outputIndex :: Directory -> FilePath -> [File] -> IO ()
 outputIndex rootDir dirPath files = do
@@ -232,7 +260,7 @@ outputIndex rootDir dirPath files = do
       (List.find isReadme files)
   Lucid.renderToFile
     (".martha" </> Path.takeDirectory dirPath </> "index.html")
-    (renderPath rootDir mContent)
+    (renderPath rootDir mContent $ dName rootDir </> dirPath)
 
 isReadme :: File -> Bool
 isReadme (File "README.md" _ _) = True
@@ -266,8 +294,9 @@ runMartha path = do
   Dir.setCurrentDirectory path
   (rootPath, rootName) <- getRoot path
   cleanupPreviousOutput
+  env <- AppEnv <$> parseGitignore <$> Text.readFile ".gitignore"
   putStrLn $ "Traversing \"" ++ rootName ++ "\" to find Markdown files"
-  rootDir <- traverseDirectory rootPath rootName
+  rootDir <- runReaderT (traverseDirectory rootPath rootName) env
   build rootDir
 
 run :: IO ()

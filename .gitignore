@@ -1,5 +1,5 @@
-.stack-work/
-node_modules/
+.stack-work
+node_modules
 *~
 martha.cabal
 
@@ -7,4 +7,4 @@ martha.cabal
 .martha
 
 # test directory
-traverse/
+# traverse

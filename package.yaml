@@ -22,6 +22,7 @@ dependencies:
 - filepath
 - file-embed
 - cmark-gfm
+- Glob
 
 library:
   source-dirs: src
@@ -56,3 +57,4 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - martha
+    - hspec
